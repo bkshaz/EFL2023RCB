@@ -28,6 +28,15 @@ def get_all_players():
         players.append(player)
     return json.loads(json_util.dumps(players))
 
+@app.route('/getallsoldplayers', methods=["GET"])
+def get_all_sold_players():
+    soldplayers = []
+    mystatusquery = {"status":"sold"}
+    cursor = collections.find(mystatusquery)
+    for allsoldplayer in cursor:
+        soldplayers.append(allsoldplayer)
+    return json.loads(json_util.dumps(soldplayers))
+
 @app.route('/getspecificplayer/<name>', methods=["GET"])
 def get_a_player(name):
     name = urllib.parse.unquote(name)
