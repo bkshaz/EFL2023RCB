@@ -126,6 +126,43 @@ def update_player(_id):
    
     return json_util.dumps(result.raw_result)
 
+def generate_objects(input_arr, purse, mbid):
+    output_arr = []
+
+    for owner_name in input_arr:
+        obj = {
+            "ownerName": owner_name,
+            "totalPoints": 0,
+            "batCount": 0,
+            "ballCount": 0,
+            "wkCount": 0,
+            "fCount": 0,
+            "totalCount": 0,
+            "currentPurse": purse,
+            "maxBid": mbid,
+            "arCount": 0
+        }
+        output_arr.append(obj)
+
+    return output_arr
+
+
+@app.route('/setup', methods=['POST'])
+def setup():
+    # create owners table
+    input_json = request.get_json()
+    objects = generate_objects(
+        input_json["teamNames"], input_json["purse"], input_json["mbid"])
+    ownercollection.drop()
+    resultowner = ownercollection.insert_many(objects)
+    print(resultowner)
+    
+
+    # reset players table
+    result = collections.update_many(
+        {}, {"$set": {"ownerTeam": "", "boughtFor": 0, "status": "unsold","points":0}})
+    return json_util.dumps(result.raw_result)
+
 if __name__ == '__main__':
     app.run()
     
