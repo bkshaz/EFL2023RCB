@@ -96,12 +96,17 @@ def update_player(_id):
     #code to handle second owner update
     if updated_data['status'] == "sold":
         owner_team = updated_data['ownerTeam']
+        #Adding below code for mock auction
+        player_points = updated_data['points']
 
         myquery = {"ownerName":owner_team}
 
         owners_data = ownercollection.find(myquery)
 
         for owner_items in owners_data:
+            #Adding below code for mock auction
+            owner_items["totalPoints"] =  owner_items["totalPoints"] + player_points
+            
             owner_items["currentPurse"] = owner_items["currentPurse"] - int(updated_data["boughtFor"])
             owner_items["totalCount"] = owner_items["totalCount"] + 1
             owner_items["maxBid"] = owner_items["currentPurse"] - (35 * (15-owner_items["totalCount"]))
