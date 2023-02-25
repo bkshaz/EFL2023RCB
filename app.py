@@ -171,15 +171,15 @@ def setup():
 def delete_player(_id):
 
     delete_data = request.get_json()
-    return(delete_data)
-    """
-    filter = {"_id": ObjectId(str(_id))}
+    #return(delete_data)
+    
+    idfilter = {"_id": ObjectId(str(_id))}
 
     amount = delete_data["boughtFor"]
     delete_data["boughtFor"] = 0
     
 
-    result = collections.update_one(filter, {"$set": delete_data})
+    result = collections.update_one(idfilter, {"$set": delete_data})
     #code to handle  owner db update
     owner_team = delete_data['ownerTeam']
     #Adding below code for mock auction
@@ -215,7 +215,7 @@ def delete_player(_id):
         filter_owner = {"_id": ObjectId(str(owner_items["_id"]))}
         result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
     return json_util.dumps(result.raw_result)
-    """
+    
 if __name__ == '__main__':
     app.run()
     
