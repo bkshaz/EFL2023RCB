@@ -167,11 +167,12 @@ def setup():
     result = collections.update_many(
         {}, {"$set": {"ownerTeam": "", "boughtFor": 0, "status": "unsold","points":0}})
     return json_util.dumps(result.raw_result)
-@app.route('/deletplayer/<_id>',methods=['PUT'])
+@app.route('/deleteplayer/<_id>',methods=['PUT'])
 def delete_player(_id):
 
     delete_data = request.get_json()
-    
+    return(delete_data)
+    """
     filter = {"_id": ObjectId(str(_id))}
 
     amount = delete_data["boughtFor"]
@@ -214,7 +215,7 @@ def delete_player(_id):
         filter_owner = {"_id": ObjectId(str(owner_items["_id"]))}
         result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
     return json_util.dumps(result.raw_result)
-
+    """
 if __name__ == '__main__':
     app.run()
     
