@@ -176,7 +176,7 @@ def delete_player(_id):
     idfilter = {"_id": ObjectId(str(_id))}
 
     amount = delete_data["boughtFor"]
-    owner_team = delete_data["ownerName"]
+    owner_team = delete_data["ownerTeam"]
     player_points = delete_data['points']
     delete_data["boughtFor"] = 0
     delete_data["ownerName"] =""
