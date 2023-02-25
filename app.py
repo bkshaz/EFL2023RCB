@@ -176,14 +176,19 @@ def delete_player(_id):
     idfilter = {"_id": ObjectId(str(_id))}
 
     amount = delete_data["boughtFor"]
+    owner_team = delete_data["ownerName"]
+    player_points = delete_data['points']
     delete_data["boughtFor"] = 0
+    delete_data["ownerName"] =""
+    delete_data["points"] = 0
+    
     
 
     result = collections.update_one(idfilter, {"$set": delete_data})
     #code to handle  owner db update
-    owner_team = delete_data['ownerTeam']
+    #owner_team = delete_data['ownerTeam']
     #Adding below code for mock auction
-    player_points = delete_data['points']
+    #player_points = delete_data['points']
 
     myquery = {"ownerName":owner_team}
 
