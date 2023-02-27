@@ -104,9 +104,7 @@ def update_player(_id):
         owners_data = ownercollection.find(myquery)
 
         for owner_items in owners_data:
-            #Adding below code for mock auction
-            owner_items["totalPoints"] =  owner_items["totalPoints"] + player_points
-            
+           
             owner_items["currentPurse"] = owner_items["currentPurse"] - int(updated_data["boughtFor"])
             owner_items["totalCount"] = owner_items["totalCount"] + 1
             owner_items["maxBid"] = owner_items["currentPurse"] - (35 * (15-owner_items["totalCount"]))
@@ -177,10 +175,10 @@ def delete_player(_id):
 
     amount = delete_data["boughtFor"]
     owner_team = delete_data["ownerTeam"]
-    player_points = delete_data['points']
+    #player_points = delete_data['points']
     delete_data["boughtFor"] = 0
     delete_data["ownerName"] =""
-    delete_data["points"] = 0
+    #delete_data["points"] = 0
     
     
 
@@ -196,7 +194,7 @@ def delete_player(_id):
 
     for owner_items in owners_data:
             #Adding below code for mock auction
-        owner_items["totalPoints"] =  owner_items["totalPoints"] - player_points
+        #owner_items["totalPoints"] =  owner_items["totalPoints"] - player_points
             
         owner_items["currentPurse"] = owner_items["currentPurse"] + int(amount)
         owner_items["totalCount"] = owner_items["totalCount"] - 1
