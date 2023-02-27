@@ -97,7 +97,7 @@ def update_player(_id):
     if updated_data['status'] == "sold":
         owner_team = updated_data['ownerTeam']
         #Adding below code for mock auction
-        player_points = updated_data['points']
+        #player_points = updated_data['points']
 
         myquery = {"ownerName":owner_team}
 
