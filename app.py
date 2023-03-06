@@ -144,7 +144,7 @@ def generate_objects(input_arr, purse, mbid):
             "currentPurse": purse,
             "maxBid": mbid,
             "arCount": 0,
-            "standing":[]
+            "standing":[0]
         }
         output_arr.append(obj)
 
