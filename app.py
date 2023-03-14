@@ -5,9 +5,16 @@ from bson import json_util,ObjectId
 import json
 from flask_cors import CORS
 import urllib.parse
+#socket code
+from flask_socketio import SocketIO,emit,join_room,send
+from flask_cors import CORS
+import time
 
 app = Flask(__name__)
 CORS(app)
+
+socketio = SocketIO(app, async_mode='eventlet', engineio_logger=True,logger=True, async_handlers=True, websocket=True, cors_allowed_origins="*")
+
 client = MongoClient("mongodb+srv://efladmin:god_is_watching@cluster0.eezohvz.mongodb.net/?retryWrites=true&w=majority")
 
 db=client["efl2023"]
@@ -219,7 +226,28 @@ def delete_player(_id):
         filter_owner = {"_id": ObjectId(str(owner_items["_id"]))}
         result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
     return json_util.dumps(result.raw_result)
+
+#Socket code
+@socketio.on("connect")
+def connected():
+    """event listener when client connects to the server"""
+    print(request.sid)
+    print("client has connected")
+    emit("connect",{"data":f"id: {request.sid} is connected"})
+
+@socketio.on("disconnect")
+def disconnected():
+    """event listener when client disconnects to the server"""
+    print("user disconnected")
+    emit("disconnect","user {request.sid} disconnected",broadcast=True)
+
+@socketio.on('join')
+def on_join(data):
+    team_name = data['team_name']
+    join_room(team_name)
+    socketio.emit('joined', {'msg': team_name +' has joined the room.'})
     
 if __name__ == '__main__':
-    app.run()
+    #app.run()
+    socketio.run(app, host='0.0.0.0', port=os.environ.get('PORT'))
     
