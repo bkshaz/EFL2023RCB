@@ -9,12 +9,13 @@ import urllib.parse
 from flask_socketio import SocketIO,emit,join_room,send
 from flask_cors import CORS
 import time
-import os
+#import os
 
 app = Flask(__name__)
 CORS(app)
 
-socketio = SocketIO(app, async_mode='eventlet', engineio_logger=True,logger=True, async_handlers=True, websocket=True, cors_allowed_origins="*")
+#socketio = SocketIO(app, async_mode='eventlet', engineio_logger=True,logger=True, async_handlers=True, websocket=True, cors_allowed_origins="*")
+socketio = SocketIO(app)
 
 client = MongoClient("mongodb+srv://efladmin:god_is_watching@cluster0.eezohvz.mongodb.net/?retryWrites=true&w=majority")
 
@@ -250,5 +251,6 @@ def on_join(data):
     
 if __name__ == '__main__':
     #app.run()
-    socketio.run(app, host='0.0.0.0', port=os.environ.get('PORT',5000))
+    #socketio.run(app, host='0.0.0.0', port=os.environ.get('PORT',5000))
+    socketio.run(app)
     
