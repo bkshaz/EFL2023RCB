@@ -9,6 +9,7 @@ import urllib.parse
 from flask_socketio import SocketIO,emit,join_room,send
 from flask_cors import CORS
 import time
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -249,5 +250,5 @@ def on_join(data):
     
 if __name__ == '__main__':
     #app.run()
-    socketio.run(app, host='0.0.0.0', port=os.environ.get('PORT'))
+    socketio.run(app, host='0.0.0.0', port=os.environ.get('PORT',5000))
     
