@@ -23,13 +23,13 @@ client = MongoClient("mongodb+srv://efladmin:god_is_watching@cluster0.eezohvz.mo
 
 db=client["efl2023"]
 
-#collections = db["eflCricket"]
+collections = db["eflCricket"]
 
-#ownercollection = db["eflCricketOwners"]
+ownercollection = db["eflCricketOwners"]
 
-collections = db["playersCopy"]
+#collections = db["playersCopy"]
 
-ownercollection = db["ownersCopy"]
+#ownercollection = db["ownersCopy"]
 
 @app.route("/")
 def welcome():
@@ -266,10 +266,8 @@ def updatescores():
         player_data = collections.find(myquery)
 
         for player in player_data:
-            if player["name"] == "Virat Kohli":
-                player["points"] += 50
-            else:
-                player["points"] = int(players_points[index])
+            #print(player)
+            player["points"] = int(players_points[index])
             if player["ownerTeam"] != "":
                 owner_to_points_start[player["ownerTeam"]] +=player["points"]
 
