@@ -9,13 +9,26 @@ import urllib.parse
 app = Flask(__name__)
 CORS(app)
 
+url = "https://fantasy.iplt20.com/season/services/feed/live/player/stats?liveVersion=11"
+
+headers = {
+   "referer": "https://fantasy.iplt20.com/season/stats/playerstats/points",
+    "Content-Type":"application/json; charset=utf-8",
+    "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+
+}
+
 client = MongoClient("mongodb+srv://efladmin:god_is_watching@cluster0.eezohvz.mongodb.net/?retryWrites=true&w=majority")
 
 db=client["efl2023"]
 
-collections = db["eflCricket"]
+#collections = db["eflCricket"]
 
-ownercollection = db["eflCricketOwners"]
+#ownercollection = db["eflCricketOwners"]
+
+collections = db["playersCopy"]
+
+ownercollection = db["ownersCopy"]
 
 @app.route("/")
 def welcome():
@@ -220,6 +233,95 @@ def delete_player(_id):
         filter_owner = {"_id": ObjectId(str(owner_items["_id"]))}
         result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
     return json_util.dumps(result.raw_result)
+
+
+@app.route('/updatescores', methods=['POST'])
+def updatescores():
+    count = 0
+    totalcount = 0
+    response = requests.get(url, headers=headers)
+
+    # storing the JSON response 
+    # from url in data
+    data_json = json.loads(response.text)
+    playersdata ={}
+    playersdata = data_json["Data"]["Value"]["PlayerStats"]
+
+    players_name = list(map(lambda rec: rec.get('plyrnm'), playersdata))
+    players_points = list(map(lambda rec: rec.get('ovrpoint'), playersdata))
+    
+    totalcount = len(players_name)
+
+    ownersdata_cursor = ownercollection.find()
+
+    owner_to_points_start = {}
+    for owner in ownersdata_cursor:
+        owner_to_points_start[owner["ownerName"]] = 0
+
+
+    for index in range(len(players_name)):
+        myquery = {"name":players_name[index]}
+
+        player_data = collections.find(myquery)
+
+        for player in player_data:
+            if player["name"] == "Virat Kohli":
+                player["points"] += 50
+            else:
+                player["points"] = int(players_points[index])
+            if player["ownerTeam"] != "":
+                owner_to_points_start[player["ownerTeam"]] +=player["points"]
+
+            filter = {"_id": ObjectId(str(player["_id"]))}
+            result = collections.update_one(filter, {"$set": player})
+
+            #count += 1
+    
+    update_ownersdata_cursor = ownercollection.find()            
+
+    for curowner in update_ownersdata_cursor:
+        curowner["totalPoints"] = owner_to_points_start[curowner["ownerName"]]
+
+        filter_owner = {"_id": ObjectId(str(curowner["_id"]))}
+        result_owner = ownercollection.update_one(filter_owner, {"$set": curowner})
+        #result_count = [count,totalcount]
+    return json_util.dumps(result.raw_result)
+
+
+@app.route('/updatestandings', methods=['POST'])
+def updatestandings():
+    ownersdata_cursor = ownercollection.find()
+
+    
+    owner_to_points ={}
+    for owner in ownersdata_cursor:
+        owner_to_points[owner["ownerName"]] = owner["totalPoints"]
+
+    sorted_teams = sorted(owner_to_points.items(), key=lambda x: x[1], reverse=True)
+
+    # create a new dictionary to store standings
+    standings = {}
+    rank = 1
+    prev_points = None
+    for idx, team in enumerate(sorted_teams):
+        team_name = team[0]
+        points = team[1]
+        if prev_points is None or points < prev_points:
+            standings[team_name] = rank
+            rank +=  1
+        else:
+            standings[team_name] = rank-1
+        prev_points = points
+
+    stand_update_ownersdata_cursor = ownercollection.find()            
+
+    for currowner in stand_update_ownersdata_cursor:
+        currowner["standing"].append(standings[currowner["ownerName"]])
+    
+        filter_owner = {"_id": ObjectId(str(currowner["_id"]))}
+        result_owner = ownercollection.update_one(filter_owner, {"$set": currowner})
+
+    return json_util.dumps(result_owner.raw_result)
 
     
 if __name__ == '__main__':
