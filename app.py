@@ -236,7 +236,7 @@ def delete_player(_id):
         result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
     return json_util.dumps(result.raw_result)
 
-
+'''
 @app.route('/updatescores', methods=['POST'])
 def updatescores():
     count = 0
@@ -287,7 +287,7 @@ def updatescores():
         #result_count = [count,totalcount]
     return json_util.dumps(result.raw_result)
 
-'''
+
 @app.route('/updatestandings', methods=['POST'])
 def updatestandings():
     ownersdata_cursor = ownercollection.find()
