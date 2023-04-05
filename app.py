@@ -536,7 +536,7 @@ def updateScores():
     return json_util.dumps("Success")
    
    
-   @app.route('/updatestandings', methods=['POST'])
+@app.route('/updatestandings', methods=['POST'])
 def updatestandings():
     ownersdata_cursor = ownercollection.find()
 
@@ -575,6 +575,17 @@ def updatestandings():
     
 
     return json_util.dumps(result_owner.raw_result)
+   
+   
+@app.route('/gettimestamps', methods=['GET'])
+def gettimestamps():
+    time_list = []
+    timestamp_collection = db['timestamps']
+    time_cursor = timestamp_collection.find()
+
+    for time in time_cursor:
+        time_list.append(time)
+    return json.loads(json_util.dumps(time_list))
 
     
 if __name__ == '__main__':
