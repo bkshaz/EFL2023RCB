@@ -6,7 +6,7 @@ import json
 from flask_cors import CORS
 import urllib.parse
 import requests
-from datetime import datetime
+from datetime import datetime,timezone,timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -458,8 +458,9 @@ def deduct_points(player_scores, player_points_to_deduct):
 
 
 def get_formatted_timestamp():
+    pst_tz = timezone(timedelta(hours=-7))
     # Get the current date and time
-    now = datetime.now()
+    now = datetime.now(pst_tz)
 
     # Format the timestamp string
     timestamp_str = now.strftime("%B %d, %Y at %I:%M%p").replace(" 0", " ")
