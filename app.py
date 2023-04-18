@@ -588,6 +588,63 @@ def gettimestamps():
         time_list.append(time)
     return json.loads(json_util.dumps(time_list))
 
+def get_gameday_id():
+    response = requests.get(url, headers=headers)
+    gameday_ids = response.json()["Data"]["Value"]["GamedayIds"]
+    return len(gameday_ids)
+
+
+def get_player_availability(json_data):
+    players = json_data["Data"]["Value"]["Players"]
+    player_availability = {}
+    for player in players:
+        if player["IsAnnounced"] == "P" or player["IsAnnounced"] == "S":
+            availability = True
+        else:
+            availability = False
+        player_availability[player["Name"]] = availability
+    return player_availability
+
+
+def set_availability_false(collection):
+    result = collection.update_many({}, {"$set": {"isAvailable": False}})
+    print(f"{result.modified_count} documents updated.")
+
+
+@app.route('/updateavailability', methods=['POST'])
+def update_availabity():
+    set_availability_false(collections)
+    avail_headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+
+    }
+    game_day_id = get_gameday_id()
+    print(game_day_id)
+    avail_url = 'https://fantasy.iplt20.com/season/services/feed/live/players?lang=en&tourgamedayId=' + \
+        str(game_day_id)
+
+    response = requests.get(avail_url, headers=avail_headers)
+
+    # storing the JSON response
+    # from url in data
+    data_json = json.loads(response.text)
+
+    availability_map = get_player_availability(data_json)
+    update_ops = []
+    for player_name, availability in availability_map.items():
+        update_op = UpdateOne(
+            {"name": player_name},
+            {"$set": {"isAvailable": availability}}
+        )
+        update_ops.append(update_op)
+    #print(len(update_ops))
+# Execute the bulk write operation
+    result = collections.bulk_write(update_ops)
+    #print(f"{result.modified_count} documents updated.")
+    
+    return json_util.dumps("Success")
+
     
 if __name__ == '__main__':
     app.run()
