@@ -475,6 +475,20 @@ def get_formatted_timestamp():
     return timestamp_str
 
 
+def get_player_gdpoints(myData):
+
+    output_dict = {}
+
+    for player in myData:
+        last_gdpoint = 0
+        pstat = player['pstats']
+        last_game = pstat[-1]
+        if last_game['gdpoint'] != '-':
+            last_gdpoint = int(last_game['gdpoint'])
+        output_dict[player['plyrnm']] = last_gdpoint
+    return output_dict
+
+
 def update_player_points(player_collection, owner_collection):
     sold_players = player_collection.find({"status": "sold"})
 
@@ -490,6 +504,8 @@ def update_player_points(player_collection, owner_collection):
     playersdata = {}
     playersdata = data_json["Data"]["Value"]["PlayerStats"]
 
+    player_today_points = get_player_gdpoints(playersdata)
+
     player_scores = get_player_scores(playersdata)
     player_points_to_deduct = extract_replacement_history(owner_collection)
     player_scores = deduct_points(player_scores, player_points_to_deduct)
@@ -499,7 +515,8 @@ def update_player_points(player_collection, owner_collection):
     for player_name, player_score in player_scores.items():
         update_op = UpdateOne(
             {"name": player_name},
-            {"$set": {"points": player_score}}
+            {"$set": {"points": player_score,
+                      "todayPoints": player_today_points[player_name]}}
         )
         update_ops.append(update_op)
     print(len(update_ops))
