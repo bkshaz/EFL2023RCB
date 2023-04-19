@@ -435,7 +435,7 @@ def extract_replacement_history(collection):
 
         # Extract the replacementHistory array from the document
         replacement_history = doc.get("replacementsHistory")
-        print(len(replacement_history))
+
         # If the replacementHistory array exists and is not empty
         if replacement_history and len(replacement_history) > 0:
 
