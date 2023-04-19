@@ -1,12 +1,12 @@
-from flask import Flask,make_response,request
-from pymongo import MongoClient,UpdateOne
+from flask import Flask, make_response, request
+from pymongo import MongoClient, UpdateOne
 import random
-from bson import json_util,ObjectId
+from bson import json_util, ObjectId
 import json
 from flask_cors import CORS
 import urllib.parse
 import requests
-from datetime import datetime,timezone,timedelta
+from datetime import datetime, timezone, timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -14,15 +14,16 @@ CORS(app)
 url = "https://fantasy.iplt20.com/season/services/feed/live/player/stats?liveVersion=11"
 
 headers = {
-   "referer": "https://fantasy.iplt20.com/season/stats/playerstats/points",
-    "Content-Type":"application/json; charset=utf-8",
-    "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+    "referer": "https://fantasy.iplt20.com/season/stats/playerstats/points",
+    "Content-Type": "application/json; charset=utf-8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
 
 }
 
-client = MongoClient("mongodb+srv://efladmin:god_is_watching@cluster0.eezohvz.mongodb.net/?retryWrites=true&w=majority")
+client = MongoClient(
+    "mongodb+srv://efladmin:god_is_watching@cluster0.eezohvz.mongodb.net/?retryWrites=true&w=majority")
 
-db=client["efl2023"]
+db = client["efl2023"]
 
 collections = db["eflCricket"]
 
@@ -32,9 +33,11 @@ ownercollection = db["eflCricketOwners"]
 
 #ownercollection = db["ownersCopy"]
 
+
 @app.route("/")
 def welcome():
     return "Welcome to EFL2023"
+
 
 @app.route('/getallplayers', methods=["GET"])
 def get_all_players():
@@ -44,24 +47,27 @@ def get_all_players():
         players.append(player)
     return json.loads(json_util.dumps(players))
 
+
 @app.route('/getallsoldplayers', methods=["GET"])
 def get_all_sold_players():
     soldplayers = []
-    mystatusquery = {"status":"sold"}
+    mystatusquery = {"status": "sold"}
     cursor = collections.find(mystatusquery)
     for allsoldplayer in cursor:
         soldplayers.append(allsoldplayer)
     return json.loads(json_util.dumps(soldplayers))
 
+
 @app.route('/getspecificplayer/<name>', methods=["GET"])
 def get_a_player(name):
     name = urllib.parse.unquote(name)
-    player_query = {"name":{"$regex":name,"$options" :'i'}}
+    player_query = {"name": {"$regex": name, "$options": 'i'}}
     player_data = collections.find_one(player_query)
     if player_data:
         return json.loads(json_util.dumps(player_data))
     else:
         return json.loads(json_util.dumps("player not found"))
+
 
 @app.route('/getallownersdata', methods=["GET"])
 def get_all_owners():
@@ -71,6 +77,7 @@ def get_all_owners():
         owners.append(owner)
     return json.loads(json_util.dumps(owners))
 
+
 @app.route('/getplayer', methods=["GET"])
 def get_player():
     tier1 = []
@@ -79,51 +86,54 @@ def get_player():
     tier4 = []
     cursor = collections.find()
     for item in cursor:
-        if item['tier'] == 1 and item['status']=="unsold":
+        if item['tier'] == 1 and item['status'] == "unsold":
             tier1.append(item)
-        elif item['tier'] == 2 and item['status']=="unsold":
+        elif item['tier'] == 2 and item['status'] == "unsold":
             tier2.append(item)
-        elif item['tier'] == 3 and item['status']=="unsold":
+        elif item['tier'] == 3 and item['status'] == "unsold":
             tier3.append(item)
-        elif item['tier'] == 4 and item['status']=="unsold":
+        elif item['tier'] == 4 and item['status'] == "unsold":
             tier4.append(item)
     if len(tier1) > 0:
         pick = random.choice(tier1)
     elif len(tier2) > 0:
         pick = random.choice(tier2)
     elif len(tier3) > 0:
-        pick =random.choice(tier3)
+        pick = random.choice(tier3)
     elif len(tier4) > 0:
-        pick =random.choice(tier4)
+        pick = random.choice(tier4)
     else:
         print("All players are processed")
-    
+
     return json.loads(json_util.dumps(pick))
 
-@app.route('/updateplayer/<_id>',methods=['PUT'])
+
+@app.route('/updateplayer/<_id>', methods=['PUT'])
 def update_player(_id):
 
     updated_data = request.get_json()
-    
+
     filter = {"_id": ObjectId(str(_id))}
-   
+
     result = collections.update_one(filter, {"$set": updated_data})
-    
-    #code to handle second owner update
+
+    # code to handle second owner update
     if updated_data['status'] == "sold":
         owner_team = updated_data['ownerTeam']
-        #Adding below code for mock auction
+        # Adding below code for mock auction
         #player_points = updated_data['points']
 
-        myquery = {"ownerName":owner_team}
+        myquery = {"ownerName": owner_team}
 
         owners_data = ownercollection.find(myquery)
 
         for owner_items in owners_data:
-           
-            owner_items["currentPurse"] = owner_items["currentPurse"] - int(updated_data["boughtFor"])
+
+            owner_items["currentPurse"] = owner_items["currentPurse"] - \
+                int(updated_data["boughtFor"])
             owner_items["totalCount"] = owner_items["totalCount"] + 1
-            owner_items["maxBid"] = owner_items["currentPurse"] - (35 * (15-owner_items["totalCount"]))
+            owner_items["maxBid"] = owner_items["currentPurse"] - \
+                (35 * (15-owner_items["totalCount"]))
             if updated_data["role"] == "Batter":
                 owner_items["batCount"] = owner_items["batCount"] + 1
             elif updated_data["role"] == "Bowler":
@@ -136,14 +146,16 @@ def update_player(_id):
                 owner_items["wkCount"] = owner_items["wkCount"] + 1
             else:
                 print("Role not found")
-            
+
             if updated_data["country"] != "India":
                 owner_items["fCount"] = owner_items["fCount"] + 1
 
         filter_owner = {"_id": ObjectId(str(owner_items["_id"]))}
-        result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
-   
+        result_owner = ownercollection.update_one(
+            filter_owner, {"$set": owner_items})
+
     return json_util.dumps(result.raw_result)
+
 
 def generate_objects(input_arr, purse, mbid):
     output_arr = []
@@ -160,7 +172,7 @@ def generate_objects(input_arr, purse, mbid):
             "currentPurse": purse,
             "maxBid": mbid,
             "arCount": 0,
-            "standing":[0]
+            "standing": [0]
         }
         output_arr.append(obj)
 
@@ -176,65 +188,67 @@ def setup():
     ownercollection.drop()
     resultowner = ownercollection.insert_many(objects)
     print(resultowner)
-    
 
     # reset players table
     result = collections.update_many(
-        {}, {"$set": {"ownerTeam": "", "boughtFor": 0, "status": "unsold","points":0}})
+        {}, {"$set": {"ownerTeam": "", "boughtFor": 0, "status": "unsold", "points": 0}})
     return json_util.dumps(result.raw_result)
-@app.route('/deleteplayer/<_id>',methods=['PUT'])
+
+
+@app.route('/deleteplayer/<_id>', methods=['PUT'])
 def delete_player(_id):
 
     delete_data = request.get_json()
-    #return(delete_data)
-    
+    # return(delete_data)
+
     idfilter = {"_id": ObjectId(str(_id))}
 
     amount = delete_data["boughtFor"]
     owner_team = delete_data["ownerTeam"]
     #player_points = delete_data['points']
     delete_data["boughtFor"] = 0
-    delete_data["ownerName"] =""
+    delete_data["ownerName"] = ""
     #delete_data["points"] = 0
-    
-    
 
     result = collections.update_one(idfilter, {"$set": delete_data})
-    #code to handle  owner db update
+    # code to handle  owner db update
     #owner_team = delete_data['ownerTeam']
-    #Adding below code for mock auction
+    # Adding below code for mock auction
     #player_points = delete_data['points']
 
-    myquery = {"ownerName":owner_team}
+    myquery = {"ownerName": owner_team}
 
     owners_data = ownercollection.find(myquery)
 
     for owner_items in owners_data:
-            #Adding below code for mock auction
+        # Adding below code for mock auction
         #owner_items["totalPoints"] =  owner_items["totalPoints"] - player_points
-            
+
         owner_items["currentPurse"] = owner_items["currentPurse"] + int(amount)
         owner_items["totalCount"] = owner_items["totalCount"] - 1
-        owner_items["maxBid"] = owner_items["currentPurse"] - (35 * (15-owner_items["totalCount"]))
+        owner_items["maxBid"] = owner_items["currentPurse"] - \
+            (35 * (15-owner_items["totalCount"]))
         if delete_data["role"] == "Batter":
             owner_items["batCount"] = owner_items["batCount"] - 1
         elif delete_data["role"] == "Bowler":
             owner_items["ballCount"] = owner_items["ballCount"] - 1
         elif delete_data["role"] == "Allrounder":
             owner_items["arCount"] = owner_items["arCount"] - 1
-                #owner_items["ballCount"] = owner_items["ballCount"] + 1
+            #owner_items["ballCount"] = owner_items["ballCount"] + 1
         elif delete_data["role"] == "WK-Batter":
             owner_items["batCount"] = owner_items["batCount"] - 1
             owner_items["wkCount"] = owner_items["wkCount"] - 1
         else:
             print("Role not found")
-            
+
         if delete_data["country"] != "India":
             owner_items["fCount"] = owner_items["fCount"] - 1
 
         filter_owner = {"_id": ObjectId(str(owner_items["_id"]))}
-        result_owner = ownercollection.update_one(filter_owner, {"$set": owner_items})
+        result_owner = ownercollection.update_one(
+            filter_owner, {"$set": owner_items})
     return json_util.dumps(result.raw_result)
+
 
 '''
 @app.route('/updatescores', methods=['POST'])
@@ -326,88 +340,82 @@ def updatestandings():
     '''
 
 
-
 @app.route('/replaceplayer/<_id>', methods=['PUT'])
 def replace_player(_id):
 
     input_data = request.get_json()
-    
+
     inPlayer = input_data['inPlayer']
     inPlayerrole = input_data['inPlayerrole']
     inPlayernationality = input_data['inPlayernationality']
     outPlayer = input_data['outPlayer']
-    outPlayerrole =input_data['outPlayerrole']
-    outPlayernationality =input_data['outPlayernationality']
-    replacementDate =input_data['replacementDate']
-    pointsToDeduct =input_data['pointsToDeduct']
+    outPlayerrole = input_data['outPlayerrole']
+    outPlayernationality = input_data['outPlayernationality']
+    replacementDate = input_data['replacementDate']
+    pointsToDeduct = input_data['pointsToDeduct']
 
-    replacement_data={"inPlayer":inPlayer,"outPlayer":outPlayer,"replacementDate":replacementDate,"pointsToDeduct":pointsToDeduct}
-    #print(replacement_data)
-    
+    replacement_data = {"inPlayer": inPlayer, "outPlayer": outPlayer,
+                        "replacementDate": replacementDate, "pointsToDeduct": pointsToDeduct}
+    # print(replacement_data)
+
     ownercollection.update_one(
-        { "_id": ObjectId(str(_id)) }, 
-        { "$push": { "replacementsHistory": replacement_data } }
+        {"_id": ObjectId(str(_id))},
+        {"$push": {"replacementsHistory": replacement_data}}
     )
-    
+
     filter_owner = {"_id": ObjectId(str(_id))}
     get_ownersdata = ownercollection.find(filter_owner)
-    
+
     for team in get_ownersdata:
         teamname = team['ownerName']
-        
-        if outPlayerrole == "Batter" :
+
+        if outPlayerrole == "Batter":
             team["batCount"] = team["batCount"] - 1
         elif outPlayerrole == "Bowler":
             team["ballCount"] = team["ballCount"] - 1
         elif outPlayerrole == "Allrounder":
             team["arCount"] = team["arCount"] - 1
-                #owner_items["ballCount"] = owner_items["ballCount"] + 1
+            #owner_items["ballCount"] = owner_items["ballCount"] + 1
         elif outPlayerrole == "WK-Batter":
             team["batCount"] = team["batCount"] - 1
             team["wkCount"] = team["wkCount"] - 1
-       
-        if inPlayerrole == "Batter" :
+
+        if inPlayerrole == "Batter":
             team["batCount"] = team["batCount"] + 1
         elif inPlayerrole == "Bowler":
             team["ballCount"] = team["ballCount"] + 1
         elif inPlayerrole == "Allrounder":
             team["arCount"] = team["arCount"] + 1
-                #owner_items["ballCount"] = owner_items["ballCount"] + 1
+            #owner_items["ballCount"] = owner_items["ballCount"] + 1
         elif inPlayerrole == "WK-Batter":
             team["batCount"] = team["batCount"] + 1
             team["wkCount"] = team["wkCount"] + 1
 
-        if outPlayernationality != 'India' :
+        if outPlayernationality != 'India':
             team["fCount"] = team["fCount"] - 1
-        
-        if inPlayernationality != 'India' :
-            team["fCount"] = team["fCount"] + 1
-        
 
-    
+        if inPlayernationality != 'India':
+            team["fCount"] = team["fCount"] + 1
+
     result_owner = ownercollection.update_one(filter_owner, {"$set": team})
 
-
-    myquery = {"name":inPlayer}
+    myquery = {"name": inPlayer}
 
     player_data = collections.find(myquery)
-    
-    
+
     for player in player_data:
-            player['ownerTeam'] = teamname
-            player['status'] = "sold"
-            #print(player)
-            filter = {"_id": ObjectId(str(player["_id"]))}
-            result = collections.update_one(filter, {"$set": player})
-    
+        player['ownerTeam'] = teamname
+        player['status'] = "sold"
+        # print(player)
+        filter = {"_id": ObjectId(str(player["_id"]))}
+        result = collections.update_one(filter, {"$set": player})
 
     # Return a success response
-    return json_util.dumps({ "status": "success", "message": "Player replacement added successfully." })
-
-
+    return json_util.dumps({"status": "success", "message": "Player replacement added successfully."})
 
 
 ''''''''''''
+
 
 def get_player_scores(playersdata):
     player_scores = {}
@@ -466,9 +474,9 @@ def get_formatted_timestamp():
     timestamp_str = now.strftime("%B %d, %Y at %I:%M%p").replace(" 0", " ")
     return timestamp_str
 
-@app.route('/updatescores', methods=['POST'])
-def updateScores():
-    sold_players = collections.find({"status": "sold"})
+
+def update_player_points(player_collection, owner_collection):
+    sold_players = player_collection.find({"status": "sold"})
 
     sold_players_dict = {}
     for player in sold_players:
@@ -483,7 +491,7 @@ def updateScores():
     playersdata = data_json["Data"]["Value"]["PlayerStats"]
 
     player_scores = get_player_scores(playersdata)
-    player_points_to_deduct = extract_replacement_history(ownercollection)
+    player_points_to_deduct = extract_replacement_history(owner_collection)
     player_scores = deduct_points(player_scores, player_points_to_deduct)
 
     # BULK UPDATE PLAYER POINTS
@@ -496,13 +504,13 @@ def updateScores():
         update_ops.append(update_op)
     print(len(update_ops))
 # Execute the bulk write operation
-    result = collections.bulk_write(update_ops)
+    result = player_collection.bulk_write(update_ops)
 
 # Print the number of documents updated
     print("Number of documents updated:", result.matched_count)
 
     # UPDATE OWNERS POINTS
-    ownersdata_cursor = ownercollection.find()
+    ownersdata_cursor = owner_collection.find()
 
     owner_to_points_start = {}
     for owner in ownersdata_cursor:
@@ -524,7 +532,7 @@ def updateScores():
         )
         update_ops.append(update_op)
 
-    result = ownercollection.bulk_write(update_ops)
+    result = owner_collection.bulk_write(update_ops)
 
 # Print the number of documents updated
     print("Number of documents updated:", result.matched_count)
@@ -533,20 +541,25 @@ def updateScores():
     timestamp_collection = db['timestamps']
     timestamp_collection.update_one(
         {}, {"$set": {"pointsUpdatedAt": get_formatted_timestamp()}})
-    
+
+
+@app.route('/updatescores', methods=['POST'])
+def updateScores():
+    update_player_points(collections, ownercollection)
+    update_player_points(db['familyPlayers'], db['familyOwners'])
     return json_util.dumps("Success")
-   
-   
+
+
 @app.route('/updatestandings', methods=['POST'])
 def updatestandings():
     ownersdata_cursor = ownercollection.find()
 
-    
-    owner_to_points ={}
+    owner_to_points = {}
     for owner in ownersdata_cursor:
         owner_to_points[owner["ownerName"]] = owner["totalPoints"]
 
-    sorted_teams = sorted(owner_to_points.items(), key=lambda x: x[1], reverse=True)
+    sorted_teams = sorted(owner_to_points.items(),
+                          key=lambda x: x[1], reverse=True)
 
     # create a new dictionary to store standings
     standings = {}
@@ -557,27 +570,27 @@ def updatestandings():
         points = team[1]
         if prev_points is None or points < prev_points:
             standings[team_name] = rank
-            rank +=  1
+            rank += 1
         else:
             standings[team_name] = rank-1
         prev_points = points
 
-    stand_update_ownersdata_cursor = ownercollection.find()            
+    stand_update_ownersdata_cursor = ownercollection.find()
 
     for currowner in stand_update_ownersdata_cursor:
         currowner["standing"].append(standings[currowner["ownerName"]])
-    
+
         filter_owner = {"_id": ObjectId(str(currowner["_id"]))}
-        result_owner = ownercollection.update_one(filter_owner, {"$set": currowner})
-         
+        result_owner = ownercollection.update_one(
+            filter_owner, {"$set": currowner})
+
     standing_collection = db['timestamps']
     standing_collection.update_one(
         {}, {"$set": {"rankingsUpdatedAt": get_formatted_timestamp()}})
-    
 
     return json_util.dumps(result_owner.raw_result)
-   
-   
+
+
 @app.route('/gettimestamps', methods=['GET'])
 def gettimestamps():
     time_list = []
@@ -587,6 +600,7 @@ def gettimestamps():
     for time in time_cursor:
         time_list.append(time)
     return json.loads(json_util.dumps(time_list))
+
 
 def get_gameday_id():
     response = requests.get(url, headers=headers)
@@ -638,15 +652,13 @@ def update_availabity():
             {"$set": {"isAvailable": availability}}
         )
         update_ops.append(update_op)
-    #print(len(update_ops))
+    # print(len(update_ops))
 # Execute the bulk write operation
     result = collections.bulk_write(update_ops)
     #print(f"{result.modified_count} documents updated.")
-    
+
     return json_util.dumps("Success")
 
-    
+
 if __name__ == '__main__':
     app.run()
-   
-    
