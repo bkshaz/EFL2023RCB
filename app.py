@@ -482,7 +482,7 @@ def get_player_gdpoints(myData):
     for player in myData:
         last_gdpoint = 0
         pstat = player['pstats']
-        last_game = pstat[-1]
+        last_game = pstat[-2]
         if last_game['gdpoint'] != '-':
             last_gdpoint = int(last_game['gdpoint'])
         output_dict[player['plyrnm']] = last_gdpoint
