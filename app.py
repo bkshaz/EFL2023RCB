@@ -51,8 +51,11 @@ def get_all_players():
 @app.route('/getallsoldplayers', methods=["GET"])
 def get_all_sold_players():
     soldplayers = []
+    # get the collection name from the request URL parameters, default to 'eflCricket' if not provided
+    collection_name = request.args.get('collection_name', default='eflCricket')
+    collection_to_search = db[collection_name]
     mystatusquery = {"status": "sold"}
-    cursor = collections.find(mystatusquery)
+    cursor = collection_to_search.find(mystatusquery)
     for allsoldplayer in cursor:
         soldplayers.append(allsoldplayer)
     return json.loads(json_util.dumps(soldplayers))
@@ -72,7 +75,11 @@ def get_a_player(name):
 @app.route('/getallownersdata', methods=["GET"])
 def get_all_owners():
     owners = []
-    cursor = ownercollection.find()
+    # get the collection name from the request URL parameters, default to 'eflCricket' if not provided
+    collection_name = request.args.get(
+        'collection_name', default='eflCricketOwners')
+    collection_to_search = db[collection_name]
+    cursor = collection_to_search.find()
     for owner in cursor:
         owners.append(owner)
     return json.loads(json_util.dumps(owners))
