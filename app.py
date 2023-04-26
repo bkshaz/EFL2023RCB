@@ -636,7 +636,7 @@ def get_player_availability(json_data):
     players = json_data["Data"]["Value"]["Players"]
     player_availability = {}
     for player in players:
-        if player["IsAnnounced"] == "P" or player["IsAnnounced"] == "S":
+        if player["IsAnnounced"] == "P" or player["IsAnnounced"] == "S" or player["IsAnnounced"] == "IMP":
             availability = True
         else:
             availability = False
